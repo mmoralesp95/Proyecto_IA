@@ -4,8 +4,7 @@ from .task import Task
 
 class TaskManager:
     # Ruta del archivo JSON donde se almacenarán las tareas
-    TASKS_FILE = os.path.join(os.path.dirname(__file__), "..", "tasks.json")
-
+    TASKS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "tasks.json")
     @staticmethod
     # Carga las tareas desde el archivo JSON. Si el archivo no existe, retorna una lista vacía
     def load_tasks():

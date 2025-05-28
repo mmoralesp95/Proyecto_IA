@@ -1,6 +1,9 @@
 import pytest
 import os
-from app.task_manager import TaskManager
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from app.modules.task_manager import TaskManager
 
 # Ruta del archivo de pruebas
 TEST_TASKS_FILE = "test_tasks.json"

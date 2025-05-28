@@ -7,8 +7,8 @@ from pathlib import Path
 # Agregar el directorio raíz del proyecto al path de Python
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.task_manager import TaskManager
-from app.task import Task
+from app.modules.task_manager import TaskManager
+from app.modules.task import Task
 
 # Ruta del archivo de pruebas
 TEST_TASKS_FILE = "test_tasks.json"

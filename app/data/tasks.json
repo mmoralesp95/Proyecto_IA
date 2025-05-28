@@ -1,0 +1,11 @@
+[
+    {
+        "id": 2,
+        "title": "Tarea 2",
+        "description": "Codificar test",
+        "priority": "Medium",
+        "effort_hours": 10,
+        "status": "On progress",
+        "assigned_to": "Ana"
+    }
+]
