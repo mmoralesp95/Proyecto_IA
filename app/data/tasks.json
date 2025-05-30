@@ -1,11 +1,11 @@
 [
     {
-        "id": 2,
-        "title": "Tarea 2",
-        "description": "Codificar test",
+        "id": 3,
+        "title": "Incidencia 3569: error en la carga de datos de cliente",
+        "description": "Resolver incidencia 3569",
         "priority": "Medium",
-        "effort_hours": 10,
-        "status": "On progress",
-        "assigned_to": "Ana"
+        "effort_hours": 20,
+        "status": "New",
+        "assigned_to": "Jose"
     }
 ]
