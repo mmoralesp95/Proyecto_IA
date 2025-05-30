@@ -1,6 +1,22 @@
 class Task:
     # Constructor de la clase Task. Inicializa los atributos de la tarea.
     def __init__(self, id, title, description, priority, effort_hours, status, assigned_to):
+        # Validaciones de tipo y formato
+        if not isinstance(id, int) or id < 1:
+            raise ValueError("id must be a positive integer")
+        if not isinstance(title, str) or not title.strip():
+            raise ValueError("title must be a non-empty string")
+        if not isinstance(description, str):
+            raise ValueError("description must be a string")
+        if not isinstance(priority, str):
+            raise ValueError("priority must be a string")
+        if not isinstance(effort_hours, int) or effort_hours < 0:
+            raise ValueError("effort_hours must be a non-negative integer")
+        if not isinstance(status, str):
+            raise ValueError("status must be a string")
+        if not isinstance(assigned_to, str):
+            raise ValueError("assigned_to must be a string")
+
         self.id = id  # Identificador único de la tarea
         self.title = title  # Título de la tarea
         self.description = description  # Descripción detallada de la tarea

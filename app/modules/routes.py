@@ -22,12 +22,16 @@ def get_tasks():
                 type: integer
               title:
                 type: string
+      404:
+        description: Archivo de tareas no encontrado
       500:
         description: Error interno del servidor
     """
     try:
         tasks = TaskManager.load_tasks()
         return jsonify([task.to_dict() for task in tasks]), 200
+    except FileNotFoundError:
+        return jsonify({"error": "Tasks file not found"}), 404
     except Exception as e:
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
@@ -55,12 +59,19 @@ def get_task(task_id):
               type: string
       404:
         description: Tarea no encontrada
+      500:
+        description: Error interno del servidor
     """
-    tasks = TaskManager.load_tasks()
-    for task in tasks:
-        if task.id == task_id:
-            return jsonify(task.to_dict()), 200
-    return jsonify({"error": "Task not found"}), 404
+    try:
+      tasks = TaskManager.load_tasks()
+      for task in tasks:
+          if task.id == task_id:
+              return jsonify(task.to_dict()), 200
+      return jsonify({"error": "Task not found"}), 404
+    except FileNotFoundError:
+        return jsonify({"error": "Tasks file not found"}), 404
+    except Exception as e:  
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
 
 @tasks_bp.route("/tasks", methods=["POST"])

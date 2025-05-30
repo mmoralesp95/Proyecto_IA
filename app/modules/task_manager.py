@@ -14,9 +14,8 @@ class TaskManager:
             with open(TaskManager.TASKS_FILE, "r") as file:
                 data = json.load(file)
                 return [Task.from_dict(task) for task in data]
-        except (json.JSONDecodeError, IOError) as e:
-            # Si hay un error de lectura o formato, retorna lista vacía o puedes loguear el error
-            return []
+        except (json.JSONDecodeError, IOError, FileNotFoundError) as e:
+            raise RuntimeError(f"Error loading tasks: {e}")
         except Exception as e:
             # Para cualquier otro error inesperado
             raise RuntimeError(f"Error loading tasks: {e}")
@@ -27,5 +26,7 @@ class TaskManager:
         try:
             with open(TaskManager.TASKS_FILE, "w") as file:
                 json.dump([task.to_dict() for task in tasks], file, indent=4)
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            raise RuntimeError(f"Error saving tasks: {e}")
         except Exception as e:
             raise RuntimeError(f"Error saving tasks: {e}")
