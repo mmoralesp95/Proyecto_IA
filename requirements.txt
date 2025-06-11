@@ -1,3 +1,5 @@
 Flask
 pytest
 flasgger
+openai
+python-dotenv

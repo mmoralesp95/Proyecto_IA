@@ -1,6 +1,6 @@
 class Task:
     # Constructor de la clase Task. Inicializa los atributos de la tarea.
-    def __init__(self, id, title, description, priority, effort_hours, status, assigned_to):
+    def __init__(self, id, title, description, priority, effort_hours, status, assigned_to, category, risk_analysis, risk_mitigation):
         # Validaciones de tipo y formato
         if not isinstance(id, int) or id < 1:
             raise ValueError("id must be a positive integer")
@@ -16,6 +16,12 @@ class Task:
             raise ValueError("status must be a string")
         if not isinstance(assigned_to, str):
             raise ValueError("assigned_to must be a string")
+        if not isinstance(category, str):
+            raise ValueError("category must be a string")
+        if not isinstance(risk_analysis, str):
+            raise ValueError("risk_analysis must be a string")
+        if not isinstance(risk_mitigation, str):
+            raise ValueError("risk_mitigation must be a string")
 
         self.id = id  # Identificador único de la tarea
         self.title = title  # Título de la tarea
@@ -24,6 +30,9 @@ class Task:
         self.effort_hours = effort_hours  # Estimación de horas de esfuerzo requeridas
         self.status = status  # Estado actual de la tarea (por ejemplo: pendiente, en progreso, completada)
         self.assigned_to = assigned_to  # Persona asignada a la tarea
+        self.category = category # Categoría de la tarea (por ejemplo: desarrollo, pruebas, documentación)
+        self.risk_analysis = risk_analysis # Análisis de riesgos asociado a la tarea
+        self.risk_mitigation = risk_mitigation # Estrategia de mitigación de riesgos asociada a la tarea
 
     # Convierte el objeto Task en un diccionario para facilitar su manipulación o serialización.
     def to_dict(self):
@@ -34,7 +43,10 @@ class Task:
             "priority": self.priority,
             "effort_hours": self.effort_hours,
             "status": self.status,
-            "assigned_to": self.assigned_to
+            "assigned_to": self.assigned_to,
+            "category": self.category,
+            "risk_analysis": self.risk_analysis,
+            "risk_mitigation": self.risk_mitigation
         }
 
     @staticmethod
@@ -47,5 +59,8 @@ class Task:
             priority=data.get("priority"),
             effort_hours=data.get("effort_hours"),
             status=data.get("status"),
-            assigned_to=data.get("assigned_to")
+            assigned_to=data.get("assigned_to"),
+            category=data.get("category"),
+            risk_analysis=data.get("risk_analysis"),
+            risk_mitigation=data.get("risk_mitigation")
         )

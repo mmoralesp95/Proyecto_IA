@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app.services.task_manager import TaskManager
 from app.models.task import Task
+from app.services import client, deployment_name
 
 # Blueprint para agrupar las rutas relacionadas con tareas
 tasks_bp = Blueprint("tasks", __name__)
@@ -259,3 +260,59 @@ def delete_task(task_id):
         return jsonify({"error": "Task not found"}), 404
     TaskManager.save_tasks(tasks)
     return jsonify({"message": "Task deleted"}), 200
+
+@tasks_bp.route("/ai/tasks/describe", methods=["POST"])
+def describe_tasks():
+    """
+    Generar una descripción breve de una tarea usando IA
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+    responses:
+      200:
+        description: Descripción generada
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+      400:
+        description: Datos inválidos o faltantes
+      500:
+        description: Error interno del servidor
+    """
+    if not client or not deployment_name:
+        return jsonify({"error": "AI service not configured"}), 500
+    try:
+    
+      data = request.get_json()
+      if data is None:
+              return jsonify({"error": "No input data provided"}), 400
+      title = data.get("title", '')
+
+      response = client.chat.completions.create(
+          model=deployment_name,
+          messages=[
+              {"role": "system", "content": "Eres experto generando descripciones técnicas breves."},
+              {"role": "user", "content": f"Describe brevemente la tarea '{title}'"}
+          ]
+      )
+
+      description = response.choices[0].message.content.strip()
+
+      return jsonify({
+          "title": title,
+          "description": description
+      })
+
+    except Exception as e:
+      return jsonify({"error": "Internal server error", "details": str(e)}), 500
