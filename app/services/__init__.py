@@ -9,7 +9,7 @@ def create_app():
     def home():
         return "¡Hola, Flask está funcionando!"
 
-    from .routes import tasks_bp
+    from app.routes.routes import tasks_bp
     app.register_blueprint(tasks_bp)
 
     return app

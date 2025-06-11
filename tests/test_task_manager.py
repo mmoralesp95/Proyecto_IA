@@ -1,67 +1,72 @@
 import pytest
 import os
-import json
 import sys
 from pathlib import Path
+import tempfile
 
-# Agregar el directorio raíz del proyecto al path de Python
+# Asegura que 'app' esté en el path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.modules.task_manager import TaskManager
-from app.modules.task import Task
+from app.services.task_manager import TaskManager
+from app.models.task import Task
 
-# Ruta del archivo de pruebas
-TEST_TASKS_FILE = "test_tasks.json"
 
-# Prueba que verifica la carga de tareas cuando el archivo no existe
-def test_load_tasks_file_not_exists(setup_teardown):
+@pytest.fixture(autouse=True)
+def patch_task_file():
+    # Crea un archivo temporal para cada test
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmp:
+        test_file = tmp.name
+    original_file = TaskManager.TASKS_FILE
+    TaskManager.TASKS_FILE = test_file
+    yield
+    # Limpia después
+    if os.path.exists(test_file):
+        os.remove(test_file)
+    TaskManager.TASKS_FILE = original_file
+
+def test_load_tasks_returns_empty_when_file_missing():
+    # Elimina el archivo temporal para simular que no existe
+    if os.path.exists(TaskManager.TASKS_FILE):
+        os.remove(TaskManager.TASKS_FILE)
     tasks = TaskManager.load_tasks()
     assert tasks == []
 
-# Prueba que verifica la carga de tareas cuando el archivo existe
-def test_load_tasks_file_exists(setup_teardown):
-    # Crear datos de prueba
-    test_tasks = [
-        {
-            "id": 1,
-            "title": "Tarea 1",
-            "description": "Descripción 1",
-            "priority": "alta",
-            "effort_hours": 5,
-            "status": "pendiente",
-            "assigned_to": "Usuario 1"
-        }
-    ]
-    
-    # Guardar datos de prueba
-    with open(TaskManager.TASKS_FILE, "w") as file:
-        json.dump(test_tasks, file)
-    
-    # Cargar y verificar
-    tasks = TaskManager.load_tasks()
-    assert len(tasks) == 1
-    assert isinstance(tasks[0], Task)
-    assert tasks[0].title == "Tarea 1"
-
-# Prueba que verifica el guardado de tareas
-def test_save_tasks(setup_teardown):
-    # Crear tarea de prueba
+def test_save_and_load_single_task():
     task = Task(
         id=1,
-        title="Tarea de prueba",
-        description="Descripción de prueba",
-        priority="media",
-        effort_hours=3,
-        status="en progreso",
-        assigned_to="Usuario prueba"
+        title="Test",
+        description="Descripción",
+        priority="alta",
+        effort_hours=2,
+        status="pendiente",
+        assigned_to="Tester"
     )
-    
-    # Guardar tarea
     TaskManager.save_tasks([task])
-    
-    # Verificar que el archivo existe y contiene los datos correctos
     assert os.path.exists(TaskManager.TASKS_FILE)
-    with open(TaskManager.TASKS_FILE, "r") as file:
-        saved_data = json.load(file)
-        assert len(saved_data) == 1
-        assert saved_data[0]["title"] == "Tarea de prueba" 
+    loaded_tasks = TaskManager.load_tasks()
+    assert len(loaded_tasks) == 1
+    loaded = loaded_tasks[0]
+    assert isinstance(loaded, Task)
+    assert loaded.title == "Test"
+    assert loaded.description == "Descripción"
+    assert loaded.priority == "alta"
+    assert loaded.effort_hours == 2
+    assert loaded.status == "pendiente"
+    assert loaded.assigned_to == "Tester"
+
+def test_save_and_load_multiple_tasks():
+    tasks = [
+        Task(id=1, title="T1", description="D1", priority="alta", effort_hours=1, status="pendiente", assigned_to="A"),
+        Task(id=2, title="T2", description="D2", priority="media", effort_hours=2, status="en progreso", assigned_to="B"),
+    ]
+    TaskManager.save_tasks(tasks)
+    loaded_tasks = TaskManager.load_tasks()
+    assert len(loaded_tasks) == 2
+    assert loaded_tasks[0].title == "T1"
+    assert loaded_tasks[1].title == "T2"
+
+def test_load_tasks_with_invalid_file():
+    with open(TaskManager.TASKS_FILE, "w") as f:
+        f.write("no es json")
+    with pytest.raises(RuntimeError):
+        TaskManager.load_tasks()

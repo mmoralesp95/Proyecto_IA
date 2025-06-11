@@ -2,8 +2,8 @@ import pytest
 import os
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
-from app.modules.task_manager import TaskManager
+sys.path.insert(0, str(Path(__file__).parent.parent / "app"))
+from services.task_manager import TaskManager # type: ignore
 
 # Ruta del archivo de pruebas
 TEST_TASKS_FILE = "test_tasks.json"

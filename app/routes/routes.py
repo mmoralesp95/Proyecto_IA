@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from .task_manager import TaskManager
-from .task import Task
+from app.services.task_manager import TaskManager
+from app.models.task import Task
 
 # Blueprint para agrupar las rutas relacionadas con tareas
 tasks_bp = Blueprint("tasks", __name__)
