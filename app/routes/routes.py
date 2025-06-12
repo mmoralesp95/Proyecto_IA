@@ -275,6 +275,17 @@ def describe_tasks():
           properties:
             title:
               type: string
+            description:
+              type: string
+            priority:
+              type: string
+            effort_hours:
+              type: integer
+            status:
+              type: string
+            assigned_to:
+              type: string
+            
     responses:
       200:
         description: Descripción generada
@@ -309,10 +320,288 @@ def describe_tasks():
 
       description = response.choices[0].message.content.strip()
 
+
       return jsonify({
-          "title": title,
+          "title": data["title"],
           "description": description
-      })
+      }), 200
+    except ValueError:
+        return jsonify({"error": "Invalid input data"}), 400
 
     except Exception as e:
       return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+@tasks_bp.route("/ai/tasks/categorize", methods=["POST"])
+def categorize_tasks():
+    """
+    Categorizar una tarea usando IA
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            priority:
+              type: string
+            effort_hours:
+              type: integer
+            status:
+              type: string
+            assigned_to:
+              type: string
+            
+    responses:
+      200:
+        description: Categoría generada
+        schema:
+          type: object
+          properties:
+            category:
+              type: string
+      400:
+        description: Datos inválidos o faltantes
+      500:
+        description: Error interno del servidor
+    """
+    if not client or not deployment_name:
+        return jsonify({"error": "AI service not configured"}), 500
+    
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No input data provided"}), 400
+        
+        title = data.get("title", '')
+        
+        response = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": "Eres experto categorizando tareas.Las categorías pueden ser: Frontend, Backend, Testing, Infra, etc."},
+                {"role": "user", "content": f"Categoriza la tarea en una palabra cuyo titulo es '{title} cuyo descripción es '{data.get('description', '')}'"}  
+            ]
+        )
+
+        category = response.choices[0].message.content.strip()
+
+        return jsonify({
+            "category": category
+        }), 200
+    
+    except ValueError:
+        return jsonify({"error": "Invalid input data"}), 400
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+@tasks_bp.route("/ai/tasks/estimate", methods=["POST"])
+def estimate_task():
+    """
+    Estimar el esfuerzo de una tarea usando IA
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            priority:
+              type: string
+            status:
+              type: string
+            assigned_to:
+              type: string
+            
+    responses:
+      200:
+        description: Estimación generada
+        schema:
+          type: object
+          properties:
+            effort_hours:
+              type: integer
+      400:
+        description: Datos inválidos o faltantes
+      500:
+        description: Error interno del servidor
+    """
+    if not client or not deployment_name:
+        return jsonify({"error": "AI service not configured"}), 500
+    
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No input data provided"}), 400
+        
+        title = data.get("title", '')
+        
+        response = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": "Eres experto estimando el esfuerzo de tareas."},
+                {"role": "user", "content": f"Responde solo con un numero entero estimando el esfuerzo en un numero en horas para la tarea '{title}' cuyo descripción es '{data.get('description', '')}' y catergoría '{data.get('category', '')}'"}
+            ]
+        )
+
+        effort_hours = response.choices[0].message.content.strip()
+
+        print(f"Effort hours response: {effort_hours}")  # Debugging line
+
+        try:
+            effort_hours = int(effort_hours)
+        except ValueError:
+            return jsonify({"error": "Invalid effort_hours value"}), 400
+
+        return jsonify({
+            "effort_hours": effort_hours
+        }), 200
+    
+    except ValueError:
+        return jsonify({"error": "Invalid input data"}), 400
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500    
+
+@tasks_bp.route("/ai/tasks/audit", methods=["POST"])
+def audit_task():
+    """
+    Auditar una tarea con IA: análisis y mitigación de riesgos.
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+            description:
+              type: string
+            priority:
+              type: string
+            effort_hours:
+              type: integer
+            status:
+              type: string
+            assigned_to:
+              type: string
+            category:
+              type: string
+    responses:
+      200:
+        description: Tarea auditada con análisis y mitigación de riesgos
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+            description:
+              type: string
+            priority:
+              type: string
+            effort_hours:
+              type: integer
+            status:
+              type: string
+            assigned_to:
+              type: string
+            category:
+              type: string
+            risk_analysis:
+              type: string
+            risk_mitigation:
+              type: string
+      400:
+        description: Datos inválidos o faltantes
+      500:
+        description: Error interno del servidor
+    """
+    if not client or not deployment_name:
+        return jsonify({"error": "AI service not configured"}), 500
+
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No input data provided"}), 400
+
+        # Validación básica de campos requeridos
+        required_fields = ["title", "description", "priority", "effort_hours", "status", "assigned_to", "category"]
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing fields"}), 400
+
+        # 1. Petición al LLM para análisis de riesgos
+        risk_analysis_prompt = (
+            f"Analiza los riesgos potenciales de la siguiente tarea:\n"
+            f"Título: {data['title']}\n"
+            f"Descripción: {data['description']}\n"
+            f"Prioridad: {data['priority']}\n"
+            f"Esfuerzo estimado: {data['effort_hours']} horas\n"
+            f"Estado: {data['status']}\n"
+            f"Asignado a: {data['assigned_to']}\n"
+            f"Categoría: {data['category']}\n"
+            f"Enumera los riesgos más relevantes."
+        )
+        risk_analysis_response = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": "Eres un experto en gestión de proyectos y análisis de riesgos."},
+                {"role": "user", "content": risk_analysis_prompt}
+            ]
+        )
+        risk_analysis = risk_analysis_response.choices[0].message.content.strip()
+
+        # 2. Petición al LLM para mitigación de riesgos
+        risk_mitigation_prompt = (
+            f"Para la tarea:\n"
+            f"Título: {data['title']}\n"
+            f"Descripción: {data['description']}\n"
+            f"Prioridad: {data['priority']}\n"
+            f"Esfuerzo estimado: {data['effort_hours']} horas\n"
+            f"Estado: {data['status']}\n"
+            f"Asignado a: {data['assigned_to']}\n"
+            f"Categoría: {data['category']}\n"
+            f"Riesgos identificados: {risk_analysis}\n"
+            f"Proporciona un plan de mitigación para estos riesgos."
+        )
+        risk_mitigation_response = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": "Eres un experto en gestión de proyectos y mitigación de riesgos."},
+                {"role": "user", "content": risk_mitigation_prompt}
+            ]
+        )
+        risk_mitigation = risk_mitigation_response.choices[0].message.content.strip()
+
+        # Devuelve la tarea con los nuevos campos
+        audited_task = {
+            "id": data.get("id"),
+            "title": data["title"],
+            "description": data["description"],
+            "priority": data["priority"],
+            "effort_hours": data["effort_hours"],
+            "status": data["status"],
+            "assigned_to": data["assigned_to"],
+            "category": data["category"],
+            "risk_analysis": risk_analysis,
+            "risk_mitigation": risk_mitigation
+        }
+
+        return jsonify(audited_task), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500

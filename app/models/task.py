@@ -1,6 +1,8 @@
 class Task:
     # Constructor de la clase Task. Inicializa los atributos de la tarea.
-    def __init__(self, id, title, description, priority, effort_hours, status, assigned_to, category, risk_analysis, risk_mitigation):
+    def __init__(self, id=None, title=None, description=None, priority=None,
+                  effort_hours=None, status=None, assigned_to=None, category=None,
+                    risk_analysis=None, risk_mitigation=None):
         # Validaciones de tipo y formato
         if not isinstance(id, int) or id < 1:
             raise ValueError("id must be a positive integer")
