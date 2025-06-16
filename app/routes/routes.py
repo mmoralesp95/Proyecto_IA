@@ -446,7 +446,7 @@ def describe_task():
 
 
     return jsonify({
-        "task": task.model_dump(),
+        "task": task.model_dump()
     }), 200
 
 @tasks_bp.route("/ai/tasks/categorize", methods=["POST"])
@@ -613,8 +613,6 @@ def audit_task():
         schema:
           type: object
           properties:
-            id:
-              type: integer
             title:
               type: string
             description:
@@ -717,20 +715,22 @@ def audit_task():
         risk_mitigation = risk_mitigation_response.choices[0].message.content.strip()
 
         # Devuelve la tarea con los nuevos campos
-        audited_task = {
-            "id": data.get("id"),
-            "title": data["title"],
-            "description": data["description"],
-            "priority": data["priority"],
-            "effort_hours": data["effort_hours"],
-            "status": data["status"],
-            "assigned_to": data["assigned_to"],
-            "category": data["category"],
-            "risk_analysis": risk_analysis,
-            "risk_mitigation": risk_mitigation
-        }
+        audited_task =  TaskModel(
+            id=data.get("id", None),  # Mantiene el ID si existe, o None si es nueva
+            title=data["title"],
+            description=data["description"],
+            priority=data["priority"],
+            effort_hours=data["effort_hours"],
+            status=data["status"],
+            assigned_to=data["assigned_to"],
+            category=data["category"],
+            risk_analysis=risk_analysis,
+            risk_mitigation=risk_mitigation
+        )
 
-        return jsonify(audited_task), 200
+        return jsonify({
+          "task": audited_task.model_dump()
+        }), 200
 
     except Exception as e:
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
