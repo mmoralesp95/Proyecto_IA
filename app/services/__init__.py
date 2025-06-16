@@ -16,8 +16,6 @@ deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 
 def create_app():
 
-
-
     app = Flask(__name__)
     Swagger(app)
 
