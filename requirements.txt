@@ -3,3 +3,5 @@ pytest
 flasgger
 openai
 python-dotenv
+requests
+pydantic

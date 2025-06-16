@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from app.services.task_manager import TaskManager
-from app.models.task import Task
 from app.services import client, deployment_name
+from pydantic import ValidationError
+from app.models.taskModel import TaskModel
 
 # Blueprint para agrupar las rutas relacionadas con tareas
 tasks_bp = Blueprint("tasks", __name__)
@@ -23,6 +24,22 @@ def get_tasks():
                 type: integer
               title:
                 type: string
+              description:
+                type: string
+              priority:
+                type: string
+              effort_hours:
+                type: integer
+              status:
+                type: string
+              assigned_to:
+                type: string
+              category:
+                type: string
+              risk_analysis:
+                type: string
+              risk_mitigation:
+                type: string
       404:
         description: Archivo de tareas no encontrado
       500:
@@ -30,12 +47,11 @@ def get_tasks():
     """
     try:
         tasks = TaskManager.load_tasks()
-        return jsonify([task.to_dict() for task in tasks]), 200
+        return jsonify([task.model_dump() for task in tasks]), 200
     except FileNotFoundError:
         return jsonify({"error": "Tasks file not found"}), 404
     except Exception as e:
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["GET"])
 def get_task(task_id):
@@ -58,6 +74,22 @@ def get_task(task_id):
               type: integer
             title:
               type: string
+            description:
+              type: string
+            priority:
+              type: string
+            effort_hours:
+              type: integer
+            status:
+              type: string
+            assigned_to:
+              type: string
+            category:
+              type: string
+            risk_analysis:
+              type: string
+            risk_mitigation:
+              type: string
       404:
         description: Tarea no encontrada
       500:
@@ -67,13 +99,12 @@ def get_task(task_id):
       tasks = TaskManager.load_tasks()
       for task in tasks:
           if task.id == task_id:
-              return jsonify(task.to_dict()), 200
+              return jsonify(task.model_dump()), 200
       return jsonify({"error": "Task not found"}), 404
     except FileNotFoundError:
         return jsonify({"error": "Tasks file not found"}), 404
     except Exception as e:  
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-
 
 @tasks_bp.route("/tasks", methods=["POST"])
 def create_task():
@@ -99,6 +130,13 @@ def create_task():
               type: string
             assigned_to:
               type: string
+            category:
+              type: string
+            risk_analysis:
+              type: string
+            risk_mitigation: 
+              type: string  
+
     responses:
       201:
         description: Tarea creada
@@ -109,6 +147,23 @@ def create_task():
               type: integer
             title:
               type: string
+            description:
+              type: string
+            priority:
+              type: string
+            effort_hours:
+              type: integer
+            status:
+              type: string
+            assigned_to:
+              type: string
+            category:
+              type: string
+            risk_analysis:
+              type: string
+            risk_mitigation:
+              type: string
+          
       400:
         description: Datos inválidos o faltantes
       500:
@@ -136,6 +191,18 @@ def create_task():
             return jsonify({"error": "Status must be a string"}), 400
         if not isinstance(data["assigned_to"], str):
             return jsonify({"error": "Assigned_to must be a string"}), 400
+        # Validación de campos opcionales
+        if "category" in data and not isinstance(data["category"], str):
+            return jsonify({"error": "Category must be a string"}), 400 
+        if "risk_analysis" in data and not isinstance(data["risk_analysis"], str):
+            return jsonify({"error": "Risk_analysis must be a string"}), 400
+        if "risk_mitigation" in data and not isinstance(data["risk_mitigation"], str):
+            return jsonify({"error": "Risk_mitigation must be a string"}), 400  
+        # Validación de datos usando Pydantic
+        try:
+            new_task = TaskModel(**data)
+        except ValidationError as e:
+            return jsonify({"error": "Invalid data", "details": e.errors()}), 400
 
         tasks = TaskManager.load_tasks()
         if tasks:
@@ -143,22 +210,13 @@ def create_task():
         else:
             new_id = 1
 
-        new_task = Task(
-            id=new_id,
-            title=data["title"],
-            description=data["description"],
-            priority=data["priority"],
-            effort_hours=data["effort_hours"],
-            status=data["status"],
-            assigned_to=data["assigned_to"]
-        )
-
+        new_task.id = new_id  # Asignar un nuevo ID
         tasks.append(new_task)
         TaskManager.save_tasks(tasks)
-        return jsonify(new_task.to_dict()), 201
+
+        return jsonify(new_task.model_dump()), 201
     except Exception as e:
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["PUT"])
 def update_task(task_id):
@@ -189,9 +247,38 @@ def update_task(task_id):
               type: string
             assigned_to:
               type: string
+            category:
+              type: string
+            risk_analysis:
+              type: string
+            risk_mitigation:
+              type: string
     responses:
       200:
         description: Tarea actualizada
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+            description:
+              type: string
+            priority:
+              type: string
+            effort_hours:
+              type: integer
+            status:
+              type: string
+            assigned_to:
+              type: string
+            category:
+              type: string
+            risk_analysis:
+              type: string
+            risk_mitigation:
+              type: string
       400:
         description: Datos inválidos
       404:
@@ -217,6 +304,14 @@ def update_task(task_id):
             return jsonify({"error": "Status must be a string"}), 400
         if "assigned_to" in data and not isinstance(data["assigned_to"], str):
             return jsonify({"error": "Assigned_to must be a string"}), 400
+        # Validación de campos opcionales
+        if "category" in data and not isinstance(data["category"], str):  
+            return jsonify({"error": "Category must be a string"}), 400
+        if "risk_analysis" in data and not isinstance(data["risk_analysis"], str):
+            return jsonify({"error": "Risk_analysis must be a string"}), 400  
+        if "risk_mitigation" in data and not isinstance(data["risk_mitigation"], str):
+            return jsonify({"error": "Risk_mitigation must be a string"}), 400
+        
 
         tasks = TaskManager.load_tasks()
         for task in tasks:
@@ -227,14 +322,21 @@ def update_task(task_id):
                 task.effort_hours = data.get("effort_hours", task.effort_hours)
                 task.status = data.get("status", task.status)
                 task.assigned_to = data.get("assigned_to", task.assigned_to)
+                task.category = data.get("category", task.category)
+                task.risk_analysis = data.get("risk_analysis", task.risk_analysis)  
+                task.risk_mitigation = data.get("risk_mitigation", task.risk_mitigation)
+                # Validación de datos usando Pydantic
+                try:
+                    updated_task = TaskModel(**task.model_dump())
+                except ValidationError as e:
+                    return jsonify({"error": "Invalid data", "details": e.errors()}), 400
 
                 TaskManager.save_tasks(tasks)
-                return jsonify(task.to_dict()), 200
+                return jsonify(task.model_dump()), 200
 
         return jsonify({"error": "Task not found"}), 404
     except Exception as e:
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
@@ -261,11 +363,13 @@ def delete_task(task_id):
     TaskManager.save_tasks(tasks)
     return jsonify({"message": "Task deleted"}), 200
 
-@tasks_bp.route("/ai/tasks/describe", methods=["POST"])
-def describe_tasks():
+@tasks_bp.route('/ai/tasks/describe', methods=['POST'])
+def describe_task():
     """
     Generar una descripción breve de una tarea usando IA
     ---
+    tags:
+      - AI
     parameters:
       - in: body
         name: body
@@ -275,67 +379,83 @@ def describe_tasks():
           properties:
             title:
               type: string
-            description:
-              type: string
             priority:
               type: string
-            effort_hours:
-              type: integer
             status:
               type: string
             assigned_to:
               type: string
-            
     responses:
       200:
-        description: Descripción generada
+        description: Tarea con descripción generada por IA
         schema:
           type: object
           properties:
-            title:
-              type: string
-            description:
-              type: string
+            task:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                priority:
+                  type: string
+                effort_hours:
+                  type: integer
+                status:
+                  type: string
+                assigned_to:
+                  type: string
+                category:
+                  type: string
+                risk_analysis:
+                  type: string
+                risk_mitigation:
+                  type: string
       400:
         description: Datos inválidos o faltantes
+      422:
+        description: Error de validación de datos
       500:
         description: Error interno del servidor
     """
     if not client or not deployment_name:
         return jsonify({"error": "AI service not configured"}), 500
-    try:
     
-      data = request.get_json()
-      if data is None:
-              return jsonify({"error": "No input data provided"}), 400
-      title = data.get("title", '')
+    try:
+        data = request.json
+        task = TaskModel(**data)
+    except ValidationError as e:
+        return jsonify({"error": e.errors()}), 422
 
-      response = client.chat.completions.create(
-          model=deployment_name,
-          messages=[
-              {"role": "system", "content": "Eres experto generando descripciones técnicas breves."},
-              {"role": "user", "content": f"Describe brevemente la tarea '{title}'"}
-          ]
-      )
+    prompt = f"Describe brevemente la tarea: '{task.title}'"
 
-      description = response.choices[0].message.content.strip()
+    try:
+        response = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": "Eres experto generando descripciones técnicas breves."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        task.description = response.choices[0].message.content.strip()
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
-      return jsonify({
-          "title": data["title"],
-          "description": description
-      }), 200
-    except ValueError:
-        return jsonify({"error": "Invalid input data"}), 400
-
-    except Exception as e:
-      return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    return jsonify({
+        "task": task.model_dump(),
+    }), 200
 
 @tasks_bp.route("/ai/tasks/categorize", methods=["POST"])
 def categorize_tasks():
     """
     Categorizar una tarea usando IA
     ---
+    tags:
+      - AI
     parameters:
       - in: body
         name: body
@@ -349,8 +469,6 @@ def categorize_tasks():
               type: string
             priority:
               type: string
-            effort_hours:
-              type: integer
             status:
               type: string
             assigned_to:
@@ -358,7 +476,7 @@ def categorize_tasks():
             
     responses:
       200:
-        description: Categoría generada
+        description: Categoría de la tarea generada por IA
         schema:
           type: object
           properties:
@@ -366,44 +484,48 @@ def categorize_tasks():
               type: string
       400:
         description: Datos inválidos o faltantes
+      422:
+        description: Error de validación de datos
       500:
         description: Error interno del servidor
     """
     if not client or not deployment_name:
         return jsonify({"error": "AI service not configured"}), 500
-    
+  
     try:
         data = request.get_json()
         if data is None:
             return jsonify({"error": "No input data provided"}), 400
-        
-        title = data.get("title", '')
-        
-        response = client.chat.completions.create(
-            model=deployment_name,
-            messages=[
-                {"role": "system", "content": "Eres experto categorizando tareas.Las categorías pueden ser: Frontend, Backend, Testing, Infra, etc."},
-                {"role": "user", "content": f"Categoriza la tarea en una palabra cuyo titulo es '{title} cuyo descripción es '{data.get('description', '')}'"}  
-            ]
-        )
+        task = TaskModel(**data)
+        title = task.title
+        description = task.description or ''
+        prompt = f"Categoriza la siguiente tarea: '{title}' con descripción '{description}'. Responde solo con la categoría."
 
-        category = response.choices[0].message.content.strip()
+        try:
+          response = client.chat.completions.create(
+              model=deployment_name,
+              messages=[
+                  {"role": "system", "content": "Eres experto categorizando tareas.Las categorías pueden ser: Frontend, Backend, Testing, Infra, etc."},
+                  {"role": "user", "content": prompt}
+              ]
+          )
+          task.category = response.choices[0].message.content.strip()
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 500
 
         return jsonify({
-            "category": category
+            "category": task.category
         }), 200
-    
-    except ValueError:
-        return jsonify({"error": "Invalid input data"}), 400
-
-    except Exception as e:
-        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    except ValidationError as e:
+        return jsonify({"error": e.errors()}), 422
 
 @tasks_bp.route("/ai/tasks/estimate", methods=["POST"])
 def estimate_task():
     """
     Estimar el esfuerzo de una tarea usando IA
     ---
+    tags:
+      - AI
     parameters:
       - in: body
         name: body
@@ -414,6 +536,8 @@ def estimate_task():
             title:
               type: string
             description:
+              type: string
+            category:
               type: string
             priority:
               type: string
@@ -443,13 +567,16 @@ def estimate_task():
         if data is None:
             return jsonify({"error": "No input data provided"}), 400
         
-        title = data.get("title", '')
+        task= TaskModel(**data)
+        title = task.title 
+        description = task.description or ''
+        category = task.category or ''
         
         response = client.chat.completions.create(
             model=deployment_name,
             messages=[
                 {"role": "system", "content": "Eres experto estimando el esfuerzo de tareas."},
-                {"role": "user", "content": f"Responde solo con un numero entero estimando el esfuerzo en un numero en horas para la tarea '{title}' cuyo descripción es '{data.get('description', '')}' y catergoría '{data.get('category', '')}'"}
+                {"role": "user", "content": f"Responde solo con un numero entero estimando el esfuerzo en un numero en horas para la tarea '{title}' cuyo descripción es '{description}' y catergoría '{category}'"}
             ]
         )
 
@@ -477,6 +604,8 @@ def audit_task():
     """
     Auditar una tarea con IA: análisis y mitigación de riesgos.
     ---
+    tags:
+      - AI
     parameters:
       - in: body
         name: body
@@ -546,7 +675,7 @@ def audit_task():
 
         # 1. Petición al LLM para análisis de riesgos
         risk_analysis_prompt = (
-            f"Analiza los riesgos potenciales de la siguiente tarea:\n"
+            f"Analiza los riesgos potenciales de la siguiente tarea en no mas de 300 caracteres:\n"
             f"Título: {data['title']}\n"
             f"Descripción: {data['description']}\n"
             f"Prioridad: {data['priority']}\n"
@@ -576,7 +705,7 @@ def audit_task():
             f"Asignado a: {data['assigned_to']}\n"
             f"Categoría: {data['category']}\n"
             f"Riesgos identificados: {risk_analysis}\n"
-            f"Proporciona un plan de mitigación para estos riesgos."
+            f"Proporciona un plan de mitigación para estos riesgos en no mas 400 caracteres."
         )
         risk_mitigation_response = client.chat.completions.create(
             model=deployment_name,

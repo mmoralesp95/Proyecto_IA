@@ -8,7 +8,7 @@ import tempfile
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.services.task_manager import TaskManager
-from app.models.task import Task
+from app.models.taskModel import TaskModel as Task
 
 
 @pytest.fixture(autouse=True)

@@ -6,6 +6,9 @@
         "priority": "Medium",
         "effort_hours": 20,
         "status": "New",
-        "assigned_to": "Jose"
+        "assigned_to": "Jose",
+        "category": "",
+        "risk_analysis": "",
+        "risk_mitigation": ""
     }
 ]

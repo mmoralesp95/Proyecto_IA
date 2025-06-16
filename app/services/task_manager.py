@@ -1,6 +1,6 @@
 import json
 import os
-from app.models.task import Task
+from app.models.taskModel import TaskModel as Task
 
 class TaskManager:
     # Ruta del archivo JSON donde se almacenarán las tareas
@@ -13,7 +13,7 @@ class TaskManager:
                 return []
             with open(TaskManager.TASKS_FILE, "r") as file:
                 data = json.load(file)
-                return [Task.from_dict(task) for task in data]
+                return [Task.parse_obj(task) for task in data]
         except (json.JSONDecodeError, IOError, FileNotFoundError) as e:
             raise RuntimeError(f"Error loading tasks: {e}")
         except Exception as e:
@@ -26,7 +26,7 @@ class TaskManager:
         try:
             print(f"GUARDANDO EN: {TaskManager.TASKS_FILE}")
             with open(TaskManager.TASKS_FILE, "w") as file:
-                json.dump([task.to_dict() for task in tasks], file, indent=4)
+                json.dump([task.dict() for task in tasks], file, indent=4)
         except (json.JSONDecodeError, FileNotFoundError) as e:
             raise RuntimeError(f"Error saving tasks: {e}")
         except Exception as e:
