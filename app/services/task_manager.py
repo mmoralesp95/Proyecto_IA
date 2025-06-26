@@ -1,33 +1,37 @@
-import json
-import os
-from app.models.taskModel import TaskModel as Task
+# app/services/task_manager.py
+
+from app.models.task import Task
+from app.db import SessionLocal
 
 class TaskManager:
-    # Ruta del archivo JSON donde se almacenarán las tareas
-    TASKS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "tasks.json"))
-    @staticmethod
-    # Carga las tareas desde el archivo JSON. Si el archivo no existe, retorna una lista vacía
-    def load_tasks():
-        try:
-            if not os.path.exists(TaskManager.TASKS_FILE):
-                return []
-            with open(TaskManager.TASKS_FILE, "r") as file:
-                data = json.load(file)
-                return [Task.parse_obj(task) for task in data]
-        except (json.JSONDecodeError, IOError, FileNotFoundError) as e:
-            raise RuntimeError(f"Error loading tasks: {e}")
-        except Exception as e:
-            # Para cualquier otro error inesperado
-            raise RuntimeError(f"Error loading tasks: {e}")
+    def __init__(self):
+        self.db = SessionLocal()
 
-    @staticmethod
-    # Guarda las tareas en el archivo JSON
-    def save_tasks(tasks):
-        try:
-            print(f"GUARDANDO EN: {TaskManager.TASKS_FILE}")
-            with open(TaskManager.TASKS_FILE, "w") as file:
-                json.dump([task.dict() for task in tasks], file, indent=4)
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            raise RuntimeError(f"Error saving tasks: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Error saving tasks: {e}")
+    def get_tasks_by_user_story(self, user_story_id):
+        return self.db.query(Task).filter(Task.user_story_id == user_story_id).all()
+
+    def create_task(self, title, description, priority, effort_hours, status, assigned_to, user_story_id, category=None, risk_analysis=None, risk_mitigation=None):
+        new_task = Task(
+            title=title,
+            description=description,
+            priority=priority,
+            effort_hours=effort_hours,
+            status=status,
+            assigned_to=assigned_to,
+            user_story_id=user_story_id,
+            category=category,
+            risk_analysis=risk_analysis,
+            risk_mitigation=risk_mitigation
+        )
+        self.db.add(new_task)
+        self.db.commit()
+        self.db.refresh(new_task)
+        return new_task
+    
+    def delete_tasks_by_user_story(self, user_story_id):
+        tasks = self.db.query(Task).filter(Task.user_story_id == user_story_id).all()
+        for task in tasks:
+            self.db.delete(task)
+        self.db.commit()
+
+

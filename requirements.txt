@@ -1,7 +1,10 @@
 Flask
+Flask-sQLAlchemy
 pytest
 flasgger
 openai
 python-dotenv
 requests
 pydantic
+mysql-connector-python
+jinja2

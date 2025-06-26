@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Tareas{% endblock %}
+
+{% block content %}
+<h3>Tareas para la historia {{ user_story_title }} con id {{user_story_id}}</h3>
+
+<hr>
+
+<table class="table table-bordered table-hover mt-2">
+    <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Prioridad</th>
+            <th>Horas</th>
+            <th>Estado</th>
+            <th>Asignado a</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.title }}</td>
+            <td>{{ task.description }}</td>
+            <td>{{ task.priority }}</td>
+            <td>{{ task.effort_hours }}</td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.assigned_to }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a class="btn btn-link" href="{{ url_for('routes.user_stories') }}">Volver a historias de usuario</a>
+{% endblock %}
