@@ -3,35 +3,73 @@
 {% block title %}Tareas{% endblock %}
 
 {% block content %}
-<h3>Tareas para la historia {{ user_story_title }} con id {{user_story_id}}</h3>
 
-<hr>
+<div class="container py-4">
+    <h2 class="mb-4 text-center">
+        Tareas para: <span class="text-primary">{{ user_story_title }}</span>
+        <small class="text-muted"> (ID {{ user_story_id }})</small>
+    </h2>
 
-<table class="table table-bordered table-hover mt-2">
-    <thead class="table-light">
-        <tr>
-            <th>ID</th>
-            <th>Título</th>
-            <th>Descripción</th>
-            <th>Prioridad</th>
-            <th>Horas</th>
-            <th>Estado</th>
-            <th>Asignado a</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for task in tasks %}
-        <tr>
-            <td>{{ task.id }}</td>
-            <td>{{ task.title }}</td>
-            <td>{{ task.description }}</td>
-            <td>{{ task.priority }}</td>
-            <td>{{ task.effort_hours }}</td>
-            <td>{{ task.status }}</td>
-            <td>{{ task.assigned_to }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-<a class="btn btn-link" href="{{ url_for('routes.user_stories') }}">Volver a historias de usuario</a>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Descripción</th>
+                        <th>Prioridad</th>
+                        <th>Horas</th>
+                        <th>Estado</th>
+                        <th>Asignado a</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.id }}</td>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.description }}</td>
+                        <td>
+                            {% if task.priority == "alta" %}
+                                <span class="badge bg-danger">Alta</span>
+                            {% elif task.priority == "media" %}
+                                <span class="badge bg-warning text-dark">Media</span>
+                            {% elif task.priority == "baja" %}
+                                <span class="badge bg-success">Baja</span>
+                            {% elif task.priority == "bloqueante" %}
+                                <span class="badge bg-dark">Bloqueante</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ task.priority }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ task.effort_hours }}</td>
+                        <td>
+                            {% if task.status == "pendiente" %}
+                                <span class="badge bg-secondary">Pendiente</span>
+                            {% elif task.status == "en_progreso" %}
+                                <span class="badge bg-info text-dark">En progreso</span>
+                            {% elif task.status == "en_revision" %}
+                                <span class="badge bg-warning text-dark">En revisión</span>
+                            {% elif task.status == "completada" %}
+                                <span class="badge bg-success">Completada</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">{{ task.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ task.assigned_to }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <a class="btn btn-outline-primary" href="{{ url_for('routes.user_stories') }}">
+            ← Volver a historias de usuario
+        </a>
+    </div>
+</div>
+
 {% endblock %}
