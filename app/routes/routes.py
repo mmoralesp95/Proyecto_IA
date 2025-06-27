@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.services.user_story_manager import UserStoryManager
 from app.services.task_manager import TaskManager
 from app.schemas.UserStorySchema import UserStorySchema
-from app.schemas.TaskSchema import TaskSchemas
+from app.schemas.TaskSchemas import TaskSchemas
 from openai import AzureOpenAI
 import os
 
@@ -129,6 +129,9 @@ def show_tasks(user_story_id):
         return redirect(url_for('routes.user_stories'))
     # Obtener las tareas asociadas a la historia de usuario
     tasks = task_manager.get_tasks_by_user_story(user_story_id)
+    if not tasks:
+        flash('No hay tareas asociadas a esta historia de usuario.', 'info')
+        return render_template('tasks.html', story=story, tasks=[], user_story_id=user_story_id, user_story_title=story.project)
     return render_template('tasks.html', story=story, tasks=tasks, user_story_id=user_story_id, user_story_title=story.project)
 
 # Añadir una tarea a una historia de usuario con IA
