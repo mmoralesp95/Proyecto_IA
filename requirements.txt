@@ -1,5 +1,5 @@
 Flask
-Flask-sQLAlchemy
+Flask-SQLAlchemy
 pytest
 flasgger
 openai
@@ -8,3 +8,4 @@ requests
 pydantic
 mysql-connector-python
 jinja2
+pymysql

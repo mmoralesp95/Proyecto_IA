@@ -1,88 +1,99 @@
-# Proyecto de Gestión de Historias de Usuario y Tareas
+# Proyecto Generador de Historias de Usuario y Tareas con IA
 
-Este proyecto es una aplicación web desarrollada en Python con Flask que permite gestionar historias de usuario y tareas asociadas, integrando funcionalidades de IA para la generación, categorización, estimación y auditoría de tareas mediante Azure OpenAI.
+Este proyecto es una aplicación web desarrollada con **Flask** que permite generar historias de usuario y tareas técnicas de manera automática utilizando **Azure OpenAI**
 
-## Características principales
-
-- **Gestión de historias de usuario:** Crear, listar y eliminar historias de usuario con campos como proyecto, rol, objetivo, razón, prioridad, puntos de historia y esfuerzo estimado.
-- **Gestión de tareas:** Generar tareas automáticamente a partir de historias de usuario usando IA, listar tareas por historia, y eliminar tareas asociadas.
-- **IA integrada:** Utiliza Azure OpenAI para:
-  - Generar historias de usuario y tareas detalladas.
-  - Describir, categorizar y estimar tareas.
-  - Auditar tareas con análisis y mitigación de riesgos.
-- **Persistencia en base de datos:** Utiliza SQLAlchemy para interactuar con la base de datos relacional.
-- **API RESTful:** Rutas para operaciones CRUD sobre tareas, con documentación Swagger.
-- **Frontend responsivo:** Interfaz web basada en Bootstrap.
-
-## Estructura del proyecto
+## Estructura del Proyecto
 
 ```
-.
+Proyecto1/
+│
 ├── app/
-│   ├── db.py
-│   ├── models/
-│   ├── routes/
-│   ├── schemas/
-│   ├── services/
-│   └── templates/
-├── run.py
-├── create_tables.py
-├── requirements.txt
-└── README.md
+│   ├── db/                  # Configuración y modelos de la base de datos
+│   ├── models/              # Modelos ORM (UserStory, Task, etc.)
+│   ├── routes/              # Blueprints y rutas Flask
+│   ├── schemas/             # Esquemas de validación y serialización
+│   ├── services/            # Lógica de negocio (gestores de historias y tareas)
+│   ├── templates/           # Plantillas HTML (Jinja2)
+│   └── static/              # Archivos estáticos (CSS, JS, imágenes)
+│
+├── requirements.txt         # Dependencias del proyecto
+├── README.md                # Este archivo
+└── run.py                   # Script principal para lanzar la aplicación
 ```
+
+## Requisitos Previos
+
+- **Python 3.8+**
+- Cuenta de **Azure OpenAI** con un modelo desplegado
+- Variables de entorno configuradas para Azure OpenAI:
+  - `AZURE_OPENAI_KEY`
+  - `AZURE_OPENAI_ENDPOINT`
+  - `AZURE_OPENAI_API_VERSION`
+  - `AZURE_OPENAI_DEPLOYMENT`
+- Variable para base de datos MySQL:
+   - `DATABASE_URL`
 
 ## Instalación
 
+1. **Descomprimir el proyecto**
 
-1. **Crea y activa un entorno virtual:**
-   ```sh
+2. **Crea un entorno virtual y actívalo:**
+   ```bash
    python -m venv venv
-   venv\Scripts\activate
+   venv\Scripts\activate 
    ```
 
 3. **Instala las dependencias:**
-   ```sh
+   ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configura las variables de entorno:**
-   Crea un archivo `.env` en la raíz con el siguiente contenido (ajusta según tu entorno):
+4. **Configura las variables de entorno**  
+   Puedes crear un archivo `.env` en la raíz del proyecto o exportarlas en tu terminal:
 
    ```
-   DATABASE_URL=mysql+mysqlconnector://usuario:contraseña@localhost/nombre_bd
    AZURE_OPENAI_KEY=tu_clave
+   AZURE_OPENAI_ENDPOINT=tu_endpoint
    AZURE_OPENAI_API_VERSION=2023-05-15
-   AZURE_OPENAI_ENDPOINT=https://<tu-endpoint>.openai.azure.com/
    AZURE_OPENAI_DEPLOYMENT=nombre_del_modelo
-   APP_SECRET_KEY=una_clave_secreta
+   DATABASE_URL=mysql+pymysql://usuario:contraseña@host:puerto/nombre_basedatos
    ```
 
-5. **Crea las tablas en la base de datos:**
-   ```sh
+## Ejecución
+
+1. **Inicializa la base de datos** (si es necesario, según tu configuración). 
+   Para crear las tablas necesarias en la base de datos, ejecuta el siguiente comando:
+   ```bash
    python create_tables.py
    ```
+   Esto generará automáticamente la estructura de la base de datos según la configuración definida.
 
-6. **Ejecuta la aplicación:**
-   ```sh
+2. **Lanza la aplicación:**
+   ```bash
    python run.py
    ```
+3. **Accede a la aplicación**  
+   Abre tu navegador en [http://localhost:5000/user-stories](http://localhost:5000/user-stories)
 
-   Accede a [http://localhost:5000/user-stories](http://localhost:5000/user-stories)
+## ¿Qué hace la aplicación?
 
+- Permite generar historias de usuario a partir de un prompt usando IA.
+- Permite generar tareas técnicas detalladas para cada historia de usuario haciendo uso de la IA
+- Visualiza, elimina y gestiona historias y tareas desde una interfaz web amigable.
 
-## Uso
+## Estructura principal de carpetas
 
-- **Historias de usuario:** Desde la interfaz web puedes crear nuevas historias de usuario usando prompts en lenguaje natural.
-- **Tareas:** Genera tareas automáticamente para cada historia de usuario, visualízalas y gestiona su estado.
-- **API:** Consulta y manipula tareas mediante endpoints REST (ver rutas en `app/routes/routesa.py`).
+- **app/models/**: Modelos de SQLAlchemy para historias y tareas.
+- **app/routes/**: Rutas Flask para la gestión de historias y tareas.
+- **app/services/**: Lógica para interactuar con la base de datos.
+- **app/templates/**: Plantillas HTML con Bootstrap para la UI.
 
-## Estructura de carpetas relevante
+## Notas
 
-- `app/models/`: Modelos de SQLAlchemy y Pydantic.
-- `app/services/`: Lógica de negocio para historias y tareas.
-- `app/routes/`: Rutas Flask para frontend y API.
-- `app/templates/`: Plantillas HTML (Jinja2).
+- Asegúrate de tener configurado correctamente tu acceso a Azure OpenAI.
+- Puedes personalizar los prompts y la lógica de generación en los servicios.
 
-## Créditos
+---
 
-Desarrollado por [Tu Nombre] como parte del
+**Autor:**  
+Miguel Morales Pareja

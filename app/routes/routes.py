@@ -5,7 +5,6 @@ from app.schemas.UserStorySchema import UserStorySchema
 from app.schemas.TaskSchema import TaskSchemas
 from openai import AzureOpenAI
 import os
-import json
 
 routes = Blueprint('routes', __name__)
 
@@ -36,7 +35,10 @@ def user_stories():
     :return: Renderiza la plantilla 'user-stories.html' con las historias de usuario.
     :rtype: flask.Response
     """
-    stories = user_story_manager.get_all_user_stories()
+    stories = user_story_manager.get_all_user_stories() # Obtener todas las historias de usuario
+    if not stories:
+        flash('No hay historias de usuario disponibles.', 'info')
+        return render_template('user-stories.html', stories=[])
     return render_template('user-stories.html', stories=stories)
 
 # Crear una nueva historia de usuario
@@ -51,14 +53,22 @@ def add_user_story():
     :return: Redirige a la vista de historias de usuario con un mensaje de éxito o error.
     :rtype: flask.Response  
     """
+    # Obtener el prompt del formulario
+    if not deployment_name: 
+        flash('El modelo de IA no está configurado correctamente.', 'error')
+        return redirect(url_for('routes.user_stories'))
+    if not client:
+        flash('El cliente de IA no está configurado correctamente.', 'error')
+        return redirect(url_for('routes.user_stories'))
+    
     prompt = request.form.get('prompt', '').strip()
     if not prompt:
-        flash('Por favor, ingresa un prompt para generar tareas.')
+        flash('Por favor, ingresa un prompt para generar tareas.', 'error')
         return redirect(url_for('routes.user_stories'))
-    # Aquí podrías llamar a IA o a tu lógica de generación.
     
+    # Generar la historia de usuario utilizando IA
     try:
-        flash('Generando historia de usuario...')
+        # Configurar el modelo de IA y el formato de respuesta
         completion = client.beta.chat.completions.parse(
             model=deployment_name,
             messages=[
@@ -77,9 +87,9 @@ def add_user_story():
                 {"role": "user", "content": prompt}],
                 response_format=UserStorySchema
         )
-        user_story = completion.choices[0].message.parsed
+        user_story = completion.choices[0].message.parsed # Obtener la historia de usuario generada
     except Exception as e:
-        flash(f'Error al generar la historia de usuario: {str(e)}')
+        flash(f'Error al generar la historia de usuario: {str(e)}', 'error')
         return redirect(url_for('routes.user_stories'))
     
     # Guardar la historia de usuario generada   
@@ -96,7 +106,7 @@ def add_user_story():
         )
         flash('Historia de usuario creada correctamente.')
     except Exception as e:
-        flash(f'Error al crear la historia de usuario: {str(e)}')
+        flash(f'Error al crear la historia de usuario: {str(e)}', 'error')
     return redirect(url_for('routes.user_stories'))
 
 # Mostrar tareas de una historia de usuario
@@ -112,11 +122,12 @@ def show_tasks(user_story_id):
     :return: Renderiza la plantilla 'tasks.html' con la historia de usuario y sus tareas.
     :rtype: flask.Response
     """
+    # Obtener la historia de usuario por ID
     story = user_story_manager.get_user_story_by_id(user_story_id)
     if story is None:
         flash('Historia de usuario no encontrada.')
         return redirect(url_for('routes.user_stories'))
-    
+    # Obtener las tareas asociadas a la historia de usuario
     tasks = task_manager.get_tasks_by_user_story(user_story_id)
     return render_template('tasks.html', story=story, tasks=tasks, user_story_id=user_story_id, user_story_title=story.project)
 
@@ -125,9 +136,16 @@ def show_tasks(user_story_id):
 def add_task(user_story_id):
     user_story = user_story_manager.get_user_story_by_id(user_story_id)
     if user_story is None:
-        flash('Historia de usuario no encontrada.')
+        flash('Historia de usuario no encontrada.', 'error')
         return redirect(url_for('routes.user_stories'))
-    
+    if not deployment_name:
+        flash('El modelo de IA no está configurado correctamente.', 'error')
+        return redirect(url_for('routes.show_tasks', user_story_id=user_story_id))
+    if not client:
+        flash('El cliente de IA no está configurado correctamente.', 'error')
+        return redirect(url_for('routes.show_tasks', user_story_id=user_story_id))
+    # Generar las tareas utilizando IA
+    # Preparar el prompt para la IA
     prompt = "Eres un Producto Owner experto en la creación de tareas para historias de usuario. Debes generar tareas tecnicamente precisas y detalladas basadas en la historia de usuario proporcionada:\n\n"
     prompt += f"Historia de Usuario:\n- Proyecto: {user_story.project}\n"
     prompt += f"- Rol: {user_story.role}\n" 
@@ -165,6 +183,7 @@ def add_task(user_story_id):
     prompt += "  ]\n"
     prompt += "}\n"
     prompt += "```"
+    # Llamar al modelo de IA para generar las tareas
     try:
         completion = client.beta.chat.completions.parse(
             model=deployment_name,
@@ -178,9 +197,15 @@ def add_task(user_story_id):
         )
         tasks_data = completion.choices[0].message.parsed
 
-        tasks = TaskSchemas(**tasks_data.model_dump())
+        tasks = TaskSchemas(**tasks_data.model_dump()) # Obtener las tareas generadas
 
+
+        # Guardar las tareas generadas en la base de datos
         for task in tasks.tasks:
+            # Verificar que la tarea tenga un título y una descripción
+            if not task.title or not task.description:
+                flash('Todas las tareas deben tener un título y una descripción.', 'error')
+                return redirect(url_for('routes.show_tasks', user_story_id=user_story_id))
             task_manager.create_task(
                 title=task.title,
                 description=task.description,
@@ -193,9 +218,9 @@ def add_task(user_story_id):
                 risk_mitigation=task.risk_mitigation,
                 user_story_id=user_story_id
             )
-        flash('Tareas generadas y guardadas correctamente.')
+        flash('Tareas generadas y guardadas correctamente.', 'info')
     except Exception as e:
-        flash(f'Error al generar las tareas: {str(e)}') 
+        flash(f'Error al generar las tareas: {str(e)}', 'error') 
     return redirect(url_for('routes.show_tasks', user_story_id=user_story_id))
 
 
@@ -212,17 +237,18 @@ def delete_user_story(user_story_id):
     :return: Redirige a la vista de historias de usuario con un mensaje de éxito o error.
     :rtype: flask.Response
     """
+    # Obtener la historia de usuario por ID
     user_story = user_story_manager.get_user_story_by_id(user_story_id)
     if user_story is None:
-        flash('Historia de usuario no encontrada.')
+        flash('Historia de usuario no encontrada.', 'error')
         return redirect(url_for('routes.user_stories'))
     
     try:
         task_manager.delete_tasks_by_user_story(user_story_id)
         user_story_manager.delete_user_story(user_story_id)
-        flash('Historia de usuario y tareas asociadas eliminadas correctamente.')
+        flash('Historia de usuario y tareas asociadas eliminadas correctamente.', 'success')
     except Exception as e:
-        flash(f'Error al eliminar la historia de usuario: {str(e)}')
+        flash(f'Error al eliminar la historia de usuario: {str(e)}', 'error')
     
     return redirect(url_for('routes.user_stories'))
 

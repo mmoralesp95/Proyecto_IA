@@ -16,6 +16,3 @@ class UserStorySchema(BaseModel):
 
     class Config:
         from_attributes = True
-
-class UserStorySchemas(BaseModel):
-    user_stories: List[UserStorySchema]

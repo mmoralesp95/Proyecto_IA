@@ -22,6 +22,18 @@
       {% endif %}
     {% endwith %}
 
+    <!-- Mensajes de error -->
+    {% with errors = get_flashed_messages(category_filter=["error", "danger"]) %}
+    {% if errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {% for error in errors %}
+            <div>{{ error }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    {% endif %}
+    {% endwith %}
+
     <!-- Formulario para enviar prompt y generar historias automáticamente -->
     <div class="card shadow mb-5">
         <div class="card-body">

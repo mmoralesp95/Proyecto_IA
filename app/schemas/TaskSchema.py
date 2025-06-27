@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 
 class TaskSchema(BaseModel):
@@ -19,5 +19,3 @@ class TaskSchema(BaseModel):
     class Config:
         from_attributes = True
 
-class TaskSchemas(BaseModel):
-    tasks: List[TaskSchema]
