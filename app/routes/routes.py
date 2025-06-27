@@ -26,12 +26,31 @@ deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 # Mostrar todas las historias de usuario
 @routes.route('/user-stories', methods=['GET'])
 def user_stories():
+    """
+    Mostrar todas las historias de usuario.
+    Esta función recupera todas las historias de usuario almacenadas y las muestra en una plantilla HTML.
+    Se utiliza el UserStoryManager para obtener las historias de usuario y renderizar la plantilla correspondiente.
+    Se espera que las historias de usuario se muestren en una tabla o lista, permitiendo al usuario ver detalles como el proyecto, rol, objetivo, razón, descripción, prioridad, puntos de historia y horas de esfuerzo.
+    Si no hay historias de usuario, se mostrará un mensaje indicando que no hay historias disponibles.
+    Se pueden realizar acciones adicionales como crear nuevas historias de usuario o eliminar historias existentes desde esta vista.
+    :return: Renderiza la plantilla 'user-stories.html' con las historias de usuario.
+    :rtype: flask.Response
+    """
     stories = user_story_manager.get_all_user_stories()
     return render_template('user-stories.html', stories=stories)
 
 # Crear una nueva historia de usuario
 @routes.route('/user-stories', methods=['POST'])
 def add_user_story():
+    """
+    Crear una nueva historia de usuario utilizando IA.
+    Esta función recibe un prompt del usuario a través de un formulario, lo procesa utilizando el modelo
+    de IA de Azure OpenAI y genera una historia de usuario basada en el prompt proporcionado.
+    Si el prompt está vacío, se muestra un mensaje de error. Si la generación es exitosa, se guarda la historia de usuario
+    en la base de datos utilizando el UserStoryManager. En caso de error durante la generación o el guardado, se muestra un mensaje de error.
+    :return: Redirige a la vista de historias de usuario con un mensaje de éxito o error.
+    :rtype: flask.Response  
+    """
     prompt = request.form.get('prompt', '').strip()
     if not prompt:
         flash('Por favor, ingresa un prompt para generar tareas.')
@@ -83,6 +102,16 @@ def add_user_story():
 # Mostrar tareas de una historia de usuario
 @routes.route('/user-stories/<int:user_story_id>/tasks', methods=['GET'])
 def show_tasks(user_story_id):
+    """
+    Mostrar las tareas asociadas a una historia de usuario específica.
+    Esta función recupera las tareas asociadas a una historia de usuario específica utilizando el ID proporcionado.
+    Si la historia de usuario no se encuentra, se muestra un mensaje de error y se redirige a la lista de historias de usuario.
+    Si se encuentran tareas, se renderiza la plantilla 'tasks.html' con la historia de usuario y las tareas asociadas.
+    :param user_story_id: ID de la historia de usuario para la cual se desean mostrar las tareas.
+    :type user_story_id: int       
+    :return: Renderiza la plantilla 'tasks.html' con la historia de usuario y sus tareas.
+    :rtype: flask.Response
+    """
     story = user_story_manager.get_user_story_by_id(user_story_id)
     if story is None:
         flash('Historia de usuario no encontrada.')
@@ -173,6 +202,16 @@ def add_task(user_story_id):
 # Eliminar una historia de usuario y sus tareas asociadas
 @routes.route('/user-stories/<int:user_story_id>/delete', methods=['POST']) 
 def delete_user_story(user_story_id):
+    """
+    Eliminar una historia de usuario y todas las tareas asociadas a ella.
+    Esta función recibe el ID de una historia de usuario y elimina tanto la historia de usuario como todas las tareas asociadas a ella.
+    Si la historia de usuario no se encuentra, se muestra un mensaje de error. Si la eliminación es exitosa, se muestra un mensaje de éxito.
+    En caso de error durante la eliminación, se muestra un mensaje de error.    
+    :param user_story_id: ID de la historia de usuario a eliminar.
+    :type user_story_id: int
+    :return: Redirige a la vista de historias de usuario con un mensaje de éxito o error.
+    :rtype: flask.Response
+    """
     user_story = user_story_manager.get_user_story_by_id(user_story_id)
     if user_story is None:
         flash('Historia de usuario no encontrada.')
