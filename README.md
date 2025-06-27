@@ -85,6 +85,7 @@ Proyecto1/
 
 - **app/models/**: Modelos de SQLAlchemy para historias y tareas.
 - **app/routes/**: Rutas Flask para la gestión de historias y tareas.
+- **app/schemas/**: Modelos de validación y serialización para asegurar la estructura de los datos intercambiados entre la API y la base de datos.
 - **app/services/**: Lógica para interactuar con la base de datos.
 - **app/templates/**: Plantillas HTML con Bootstrap para la UI.
 
