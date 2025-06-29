@@ -4,7 +4,12 @@ from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-with patch("app.services.AzureOpenAI", MagicMock()):
+os.environ["AZURE_OPENAI_KEY"] = "dummy"
+os.environ["AZURE_OPENAI_ENDPOINT"] = "dummy"
+os.environ["AZURE_OPENAI_API_VERSION"] = "dummy"
+os.environ["AZURE_OPENAI_DEPLOYMENT"] = "dummy"
+
+with patch("openai.AzureOpenAI", MagicMock()):
     from run import app
 
 def test_root():
