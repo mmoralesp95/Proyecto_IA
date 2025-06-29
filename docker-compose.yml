@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: flask_app
+    ports:
+      - "5000:5000"
+    environment:
+      - AZURE_OPENAI_KEY=${AZURE_OPENAI_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
+      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT}
+      - DATABASE_URL=mysql+pymysql://user:password@db:3306/proyecto1
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app/app
+      - ./run.py:/app/run.py
+
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3309:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
