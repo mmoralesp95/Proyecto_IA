@@ -57,7 +57,7 @@ jobs:
 
     - name: Run tests (opcional)
       run: |
-        if [ -f test_app.py ]; then pytest; else echo "No tests found"; fi
+        if [ -d test ]; then pytest; else echo "No tests found"; fi
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
