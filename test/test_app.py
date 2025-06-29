@@ -1,10 +1,10 @@
 import sys
 import os
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-with patch("app.routes.routes.AzureOpenAI"):
+with patch("app.services.AzureOpenAI", MagicMock()):
     from run import app
 
 def test_root():
