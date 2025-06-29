@@ -4,10 +4,12 @@ from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Variables de entorno dummy
 os.environ["AZURE_OPENAI_KEY"] = "dummy"
 os.environ["AZURE_OPENAI_ENDPOINT"] = "dummy"
 os.environ["AZURE_OPENAI_API_VERSION"] = "dummy"
 os.environ["AZURE_OPENAI_DEPLOYMENT"] = "dummy"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:" 
 
 with patch("openai.AzureOpenAI", MagicMock()):
     from run import app
