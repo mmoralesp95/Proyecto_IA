@@ -119,6 +119,7 @@ Una vez subida, cualquier usuario puede desplegar tu aplicación con:
 ```bash
 docker pull mmoralesp23/flask-app:latest
 docker run -p 5000:5000 mmoralesp23/flask-app:latest
+```
 
 Este es el enlace a mi imagen de docker: https://hub.docker.com/repository/docker/mmoralesp23/flask-app 
 
