@@ -10,6 +10,7 @@ jobs:
   build-test-push:
     runs-on: ubuntu-latest
 
+    # Se añaden los secretos necesarios para la aplicación
     env:
       APP_SECRET_KEY: ${{ secrets.APP_SECRET_KEY }}
       AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
@@ -22,6 +23,7 @@ jobs:
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+    # Configuración del servicio de base de datos MySQL
     services:
       db:
         image: mysql:8.0
@@ -35,17 +37,21 @@ jobs:
         options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
+    # Paso 1: Configuración del entorno
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
+      # Paso 2: Configuración de Python y dependencias
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      # Paso 3: Instalación de dependencias
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # Paso 4: Espera a que la base de datos MySQL esté lista
       - name: Wait for DB to be ready
         run: |
           for i in {1..30}; do
@@ -55,6 +61,7 @@ jobs:
           done
           echo "MySQL did not start in time" && exit 1
 
+      # Paso 5: Configuración del archivo .env para pruebas y build
       - name: Crear archivo .env para tests y build
         run: |
           cat <<EOF > .env
@@ -70,23 +77,24 @@ jobs:
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           EOF
 
+      # Paso 6: Se lanzan los tests
       - name: Run tests (opcional)
         run: |
           if [ -d test ]; then pytest; else echo "No tests found"; fi
-
+      # Paso 7: Se accede a docker hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+      #Paso 8: Construcción y subida de la imagen Docker
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
-
+      # Paso 9: Se sube la imagen Docker a Docker Hub
       - name: Push Docker image
         uses: docker/build-push-action@v5
         with:
