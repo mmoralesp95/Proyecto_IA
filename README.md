@@ -114,7 +114,7 @@ El proyecto incluye un pipeline de CI/CD en [`.github/workflows/ci.yml`](.github
 
 ## Uso de la imagen desde Docker Hub
 
-Una vez subida, cualquier usuario puede desplegar tu aplicación con:
+Una vez subida, cualquier usuario puede desplega la aplicación con:
 
 ```bash
 docker pull mmoralesp23/flask-app:latest
