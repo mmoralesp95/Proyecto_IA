@@ -10,7 +10,6 @@ jobs:
   build-test-push:
     runs-on: ubuntu-latest
 
-    # Variables de entorno globales para todo el job (puedes añadir las que necesites)
     env:
       APP_SECRET_KEY: ${{ secrets.APP_SECRET_KEY }}
       AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
@@ -35,46 +34,60 @@ jobs:
         options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-    - name: Wait for DB to be ready
-      run: |
-        for i in {1..30}; do
-          nc -z 127.0.0.1 3309 && echo "MySQL is up!" && exit 0
-          echo "Waiting for MySQL..."
-          sleep 2
-        done
-        echo "MySQL did not start in time" && exit 1
+      - name: Wait for DB to be ready
+        run: |
+          for i in {1..30}; do
+            nc -z 127.0.0.1 3309 && echo "MySQL is up!" && exit 0
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+          echo "MySQL did not start in time" && exit 1
 
-    - name: Run tests (opcional)
-      run: |
-        if [ -d test ]; then pytest; else echo "No tests found"; fi
+      - name: Crear archivo .env para tests y build
+        run: |
+          cat <<EOF > .env
+          APP_SECRET_KEY=${{ secrets.APP_SECRET_KEY }}
+          AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          OPENAI_API_VERSION=${{ secrets.OPENAI_API_VERSION }}
+          AZURE_OPENAI_DEPLOYMENT=${{ secrets.AZURE_OPENAI_DEPLOYMENT }}
+          MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER=${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+          EOF
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Run tests (opcional)
+        run: |
+          if [ -d test ]; then pytest; else echo "No tests found"; fi
 
-    - name: Build Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: false
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
+
+      - name: Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
