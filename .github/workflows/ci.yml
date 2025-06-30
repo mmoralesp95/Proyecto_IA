@@ -20,6 +20,7 @@ jobs:
       MYSQL_USER: ${{ secrets.MYSQL_USER }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     services:
       db:
@@ -66,6 +67,7 @@ jobs:
           MYSQL_USER=${{ secrets.MYSQL_USER }}
           MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
           MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
           EOF
 
       - name: Run tests (opcional)
