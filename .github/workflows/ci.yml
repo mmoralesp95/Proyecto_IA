@@ -7,10 +7,11 @@ on:
     branches: [main]
 
 jobs:
-  build-test-push:
+  # Primer job: compilar, testear y guardar la imagen Docker
+  build-test:
     runs-on: ubuntu-latest
 
-    # Se añaden los secretos necesarios para la aplicación
+    # Variables de entorno con secrets para uso en la app y en los tests
     env:
       APP_SECRET_KEY: ${{ secrets.APP_SECRET_KEY }}
       AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
@@ -23,7 +24,7 @@ jobs:
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-    # Configuración del servicio de base de datos MySQL
+    # Servicio de MySQL para pruebas de integración (accesible en localhost:3309)
     services:
       db:
         image: mysql:8.0
@@ -37,21 +38,21 @@ jobs:
         options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-    # Paso 1: Configuración del entorno
+      # Paso 1: Clona el repositorio
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      # Paso 2: Configuración de Python y dependencias
+
+      # Paso 2: Prepara Python 3.11
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # Paso 3: Instalación de dependencias
+      # Paso 3: Instala dependencias de Python desde requirements.txt
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Paso 4: Espera a que la base de datos MySQL esté lista
+      # Paso 4: Espera a que MySQL esté levantado y accesible
       - name: Wait for DB to be ready
         run: |
           for i in {1..30}; do
@@ -61,7 +62,7 @@ jobs:
           done
           echo "MySQL did not start in time" && exit 1
 
-      # Paso 5: Configuración del archivo .env para pruebas y build
+      # Paso 5: Crea el archivo .env con los secrets (necesario para tests y build Docker)
       - name: Crear archivo .env para tests y build
         run: |
           cat <<EOF > .env
@@ -77,27 +78,56 @@ jobs:
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           EOF
 
-      # Paso 6: Se lanzan los tests
+      # Paso 6: Ejecuta los tests de Python usando pytest
       - name: Run tests (opcional)
         run: |
           if [ -d test ]; then pytest; else echo "No tests found"; fi
-      # Paso 7: Se accede a docker hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      #Paso 8: Construcción y subida de la imagen Docker
+
+      # Paso 7: Construye la imagen Docker (solo la construye, no la sube aún)
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
-      # Paso 9: Se sube la imagen Docker a Docker Hub
-      - name: Push Docker image
-        uses: docker/build-push-action@v5
+
+      # Paso 8: Guarda la imagen Docker como un artefacto comprimido para el siguiente job
+      - name: Save image as artifact
+        run: docker save ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest | gzip > image.tar.gz
+
+      # Paso 9: Sube el artefacto de la imagen al almacenamiento de GitHub Actions
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
+          name: docker-image
+          path: image.tar.gz
+
+  # Segundo job: solo sube la imagen a Docker Hub si el anterior tuvo éxito
+  push:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      # Clona el repo (necesario aunque no uses código fuente, es estándar en Actions)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Descarga el artefacto de imagen Docker generado en el job anterior
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+
+      # Carga la imagen Docker comprimida al daemon de Docker
+      - name: Load Docker image
+        run: gunzip -c image.tar.gz | docker load
+
+      # Hace login en Docker Hub usando los secrets configurados
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Sube la imagen ya construida a Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/flask-app:latest
