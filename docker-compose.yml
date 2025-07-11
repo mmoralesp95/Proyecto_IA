@@ -11,7 +11,7 @@ services:
       - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
       - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
       - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT}
-      - DATABASE_URL=mysql+pymysql://user:password@db:3306/proyecto1
+      - DATABASE_URL=${DATABASE_URL}
       - APP_SECRET_KEY=${APP_SECRET_KEY}
     depends_on:
       - db
